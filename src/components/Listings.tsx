@@ -1,7 +1,10 @@
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Bed, Bath, Square } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MapPin, Bed, Bath, Square, Search } from "lucide-react";
 import property1 from "@/assets/property-1.jpg";
 import property2 from "@/assets/property-2.jpg";
 import property3 from "@/assets/property-3.jpg";
@@ -46,8 +49,23 @@ const properties = [
 ];
 
 export const Listings = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [locationFilter, setLocationFilter] = useState("all");
+  const [bedroomFilter, setBedroomFilter] = useState("all");
+
+  const filteredProperties = useMemo(() => {
+    return properties.filter((property) => {
+      const matchesSearch = property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           property.location.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesLocation = locationFilter === "all" || property.location.includes(locationFilter);
+      const matchesBedrooms = bedroomFilter === "all" || property.bedrooms.toString() === bedroomFilter;
+      
+      return matchesSearch && matchesLocation && matchesBedrooms;
+    });
+  }, [searchQuery, locationFilter, bedroomFilter]);
+
   return (
-    <section className="py-20 bg-gradient-to-b from-background to-muted/20">
+    <section id="listings" className="py-20 bg-gradient-to-b from-background to-muted/20">
       <div className="container mx-auto px-4">
         <div className="text-center mb-12">
           <h2 className="text-4xl font-bold mb-4">Featured Properties</h2>
@@ -56,8 +74,64 @@ export const Listings = () => {
           </p>
         </div>
 
+        {/* Search and Filter Section */}
+        <div className="max-w-5xl mx-auto mb-12 space-y-4">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            <Input
+              type="text"
+              placeholder="Search by property name or location..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-12"
+            />
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Select value={locationFilter} onValueChange={setLocationFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Location" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Locations</SelectItem>
+                <SelectItem value="Lagos">Lagos</SelectItem>
+                <SelectItem value="Abuja">Abuja</SelectItem>
+                <SelectItem value="Port Harcourt">Port Harcourt</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={bedroomFilter} onValueChange={setBedroomFilter}>
+              <SelectTrigger>
+                <SelectValue placeholder="Bedrooms" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any Bedrooms</SelectItem>
+                <SelectItem value="2">2 Bedrooms</SelectItem>
+                <SelectItem value="3">3 Bedrooms</SelectItem>
+                <SelectItem value="4">4+ Bedrooms</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setSearchQuery("");
+                setLocationFilter("all");
+                setBedroomFilter("all");
+              }}
+            >
+              Clear Filters
+            </Button>
+          </div>
+        </div>
+
+        {/* Results Count */}
+        <div className="text-center mb-6 text-muted-foreground">
+          Showing {filteredProperties.length} {filteredProperties.length === 1 ? 'property' : 'properties'}
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {properties.map((property) => (
+          {filteredProperties.map((property) => (
             <Card key={property.id} className="overflow-hidden hover:shadow-lg transition-all duration-300 group">
               <div className="relative overflow-hidden">
                 <img

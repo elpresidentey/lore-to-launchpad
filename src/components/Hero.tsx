@@ -1,8 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import heroImage from "@/assets/hero-home.jpg";
+import { SignupDialog } from "@/components/SignupDialog";
 
 export const Hero = () => {
+  const scrollToListings = () => {
+    document.getElementById('listings')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
       {/* Background Image with Overlay */}
@@ -25,13 +30,21 @@ export const Hero = () => {
             Connect directly with landlords and tenants. No agents. No high fees. Just affordable, transparent renting.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 animate-in fade-in slide-in-from-bottom-4 duration-1000 delay-300">
-            <Button size="lg" className="text-lg px-8 bg-primary hover:bg-primary/90 shadow-large transition-all duration-300 hover:scale-105">
+            <Button 
+              size="lg" 
+              className="text-lg px-8 bg-primary hover:bg-primary/90 shadow-large transition-all duration-300 hover:scale-105"
+              onClick={scrollToListings}
+            >
               Find a Home
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-            <Button size="lg" variant="outline" className="text-lg px-8 border-2 border-white text-white hover:bg-white hover:text-foreground transition-all duration-300">
-              List Your Property
-            </Button>
+            <SignupDialog 
+              trigger={
+                <Button size="lg" variant="outline" className="text-lg px-8 border-2 border-white text-white hover:bg-white hover:text-foreground transition-all duration-300">
+                  List Your Property
+                </Button>
+              }
+            />
           </div>
           
           {/* Stats */}

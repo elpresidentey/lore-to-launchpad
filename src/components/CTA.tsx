@@ -1,9 +1,13 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { SignupDialog } from "@/components/SignupDialog";
 
 export const CTA = () => {
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
-    <section className="py-24 px-4 relative overflow-hidden">
+    <section id="cta" className="py-24 px-4 relative overflow-hidden">
       {/* Gradient Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary via-secondary to-primary opacity-10" />
       
@@ -17,11 +21,13 @@ export const CTA = () => {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Button size="lg" className="text-lg px-10 py-6 bg-primary hover:bg-primary/90 shadow-large transition-all duration-300 hover:scale-105">
-              Get Started Now
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <Button size="lg" variant="outline" className="text-lg px-10 py-6 border-2 transition-all duration-300 hover:scale-105">
+            <SignupDialog />
+            <Button 
+              size="lg" 
+              variant="outline" 
+              className="text-lg px-10 py-6 border-2 transition-all duration-300 hover:scale-105"
+              onClick={scrollToTop}
+            >
               Learn More
             </Button>
           </div>
