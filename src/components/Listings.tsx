@@ -1,68 +1,88 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MapPin, Bed, Bath, Square, Search } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { PropertyDetailDialog } from "./PropertyDetailDialog";
+import { ListPropertyDialog } from "./ListPropertyDialog";
 import property1 from "@/assets/property-1.jpg";
 import property2 from "@/assets/property-2.jpg";
 import property3 from "@/assets/property-3.jpg";
 
-const properties = [
-  {
-    id: 1,
-    image: property1,
-    title: "Modern 3-Bedroom Apartment",
-    location: "Lekki Phase 1, Lagos",
-    price: "₦2,500,000",
-    period: "/year",
-    bedrooms: 3,
-    bathrooms: 2,
-    area: "120 sqm",
-    featured: true,
-  },
-  {
-    id: 2,
-    image: property2,
-    title: "Spacious 2-Bedroom Duplex",
-    location: "Maitama, Abuja",
-    price: "₦3,200,000",
-    period: "/year",
-    bedrooms: 2,
-    bathrooms: 2,
-    area: "150 sqm",
-    featured: false,
-  },
-  {
-    id: 3,
-    image: property3,
-    title: "Luxury 4-Bedroom House",
-    location: "GRA Phase 2, Port Harcourt",
-    price: "₦4,800,000",
-    period: "/year",
-    bedrooms: 4,
-    bathrooms: 3,
-    area: "200 sqm",
-    featured: true,
-  },
-];
+type Property = {
+  id: string;
+  image_url: string | null;
+  title: string;
+  location: string;
+  city: string;
+  price: number;
+  bedrooms: number;
+  bathrooms: number;
+  area: string;
+  description: string | null;
+  featured: boolean;
+  landlord_email: string;
+  landlord_phone: string;
+};
+
+// Default fallback images
+const defaultImages = [property1, property2, property3];
 
 export const Listings = () => {
+  const [properties, setProperties] = useState<Property[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [locationFilter, setLocationFilter] = useState("all");
   const [bedroomFilter, setBedroomFilter] = useState("all");
+  const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
+
+  useEffect(() => {
+    fetchProperties();
+  }, []);
+
+  const fetchProperties = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('properties')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setProperties(data || []);
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePropertyAdded = () => {
+    fetchProperties();
+  };
 
   const filteredProperties = useMemo(() => {
     return properties.filter((property) => {
       const matchesSearch = property.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                            property.location.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesLocation = locationFilter === "all" || property.location.includes(locationFilter);
+      const matchesLocation = locationFilter === "all" || property.city.includes(locationFilter);
       const matchesBedrooms = bedroomFilter === "all" || property.bedrooms.toString() === bedroomFilter;
       
       return matchesSearch && matchesLocation && matchesBedrooms;
     });
-  }, [searchQuery, locationFilter, bedroomFilter]);
+  }, [properties, searchQuery, locationFilter, bedroomFilter]);
+
+  if (loading) {
+    return (
+      <section id="listings" className="py-20 bg-gradient-to-b from-background to-muted/20">
+        <div className="container mx-auto px-4 text-center">
+          <p className="text-muted-foreground">Loading properties...</p>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section id="listings" className="py-20 bg-gradient-to-b from-background to-muted/20">
@@ -131,11 +151,11 @@ export const Listings = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredProperties.map((property) => (
+          {filteredProperties.map((property, index) => (
             <Card key={property.id} className="overflow-hidden hover:shadow-lg transition-all duration-300 group">
               <div className="relative overflow-hidden">
                 <img
-                  src={property.image}
+                  src={property.image_url || defaultImages[index % defaultImages.length]}
                   alt={property.title}
                   className="w-full h-56 object-cover transition-transform duration-300 group-hover:scale-110"
                 />
@@ -158,8 +178,8 @@ export const Listings = () => {
 
               <CardContent className="pb-3">
                 <div className="flex items-baseline gap-1 mb-4">
-                  <span className="text-2xl font-bold text-primary">{property.price}</span>
-                  <span className="text-muted-foreground text-sm">{property.period}</span>
+                  <span className="text-2xl font-bold text-primary">₦{property.price.toLocaleString()}</span>
+                  <span className="text-muted-foreground text-sm">/year</span>
                 </div>
 
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -179,7 +199,11 @@ export const Listings = () => {
               </CardContent>
 
               <CardFooter>
-                <Button className="w-full" variant="outline">
+                <Button 
+                  className="w-full" 
+                  variant="outline"
+                  onClick={() => setSelectedProperty(property)}
+                >
                   View Details
                 </Button>
               </CardFooter>
@@ -187,10 +211,22 @@ export const Listings = () => {
           ))}
         </div>
 
+        {selectedProperty && (
+          <PropertyDetailDialog
+            property={selectedProperty}
+            open={!!selectedProperty}
+            onOpenChange={(open) => !open && setSelectedProperty(null)}
+          />
+        )}
+
+        {filteredProperties.length === 0 && !loading && (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground text-lg">No properties found matching your criteria.</p>
+          </div>
+        )}
+
         <div className="text-center mt-12">
-          <Button size="lg" className="shadow-lg">
-            Browse All Properties
-          </Button>
+          <ListPropertyDialog onPropertyAdded={handlePropertyAdded} />
         </div>
       </div>
     </section>

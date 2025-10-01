@@ -16,6 +16,7 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowRight } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const signupSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100, "Name is too long"),
@@ -47,13 +48,32 @@ export const SignupDialog = ({ trigger }: SignupDialogProps) => {
 
   const userType = watch("userType");
 
-  const onSubmit = (data: SignupForm) => {
-    toast({
-      title: "Welcome to House Matters!",
-      description: `We'll contact you soon at ${data.email}`,
-    });
-    setOpen(false);
-    reset();
+  const onSubmit = async (data: SignupForm) => {
+    try {
+      const { error } = await supabase
+        .from('user_signups')
+        .insert([{
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          user_type: data.userType,
+        }]);
+
+      if (error) throw error;
+
+      toast({
+        title: "Welcome to House Matters!",
+        description: `We'll contact you soon at ${data.email}`,
+      });
+      setOpen(false);
+      reset();
+    } catch (error: any) {
+      toast({
+        title: "Signup failed",
+        description: error.message || "Something went wrong. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   return (

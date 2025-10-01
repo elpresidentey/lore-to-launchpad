@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import heroImage from "@/assets/hero-home.jpg";
-import { SignupDialog } from "@/components/SignupDialog";
+import { ListPropertyDialog } from "@/components/ListPropertyDialog";
 
 export const Hero = () => {
   const scrollToListings = () => {
@@ -38,7 +38,7 @@ export const Hero = () => {
               Find a Home
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-            <SignupDialog 
+            <ListPropertyDialog 
               trigger={
                 <Button size="lg" variant="outline" className="text-lg px-8 border-2 border-white text-white hover:bg-white hover:text-foreground transition-all duration-300">
                   List Your Property
